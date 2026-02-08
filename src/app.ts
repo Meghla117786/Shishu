@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes";
 import visitorRoutes from "./routes/visitorRoutes";
 import aboutRoutes from "./routes/aboutRoutes";
+import { about } from "./controllers/aboutController";
 
 dotenv.config();
 
@@ -33,6 +34,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/visitors", visitorRoutes);
 app.use("/api/about", aboutRoutes);
+app.use("/api/about/test", about);
 
 app.get("/", (_req, res) => {
     res.send("API running successfully 🚀");

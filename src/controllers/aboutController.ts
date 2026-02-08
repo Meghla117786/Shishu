@@ -26,6 +26,9 @@ export const getAbout = async (req: Request, res: Response) => {
         });
     }
 };
+export const about = async (req: Request, res: Response) => {
+    res.send("test")
+};
 
 export const updateAbout = async (req: Request, res: Response) => {
     try {

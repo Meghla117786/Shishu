@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateAbout = exports.getAbout = void 0;
+exports.updateAbout = exports.about = exports.getAbout = void 0;
 const About_1 = __importDefault(require("../models/About"));
 const db_1 = __importDefault(require("../config/db"));
 const getAbout = async (req, res) => {
@@ -30,6 +30,10 @@ const getAbout = async (req, res) => {
     }
 };
 exports.getAbout = getAbout;
+const about = async (req, res) => {
+    res.send("test");
+};
+exports.about = about;
 const updateAbout = async (req, res) => {
     try {
         await (0, db_1.default)(); // 🔴 REQUIRED

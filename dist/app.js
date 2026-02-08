@@ -9,6 +9,7 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
 const visitorRoutes_1 = __importDefault(require("./routes/visitorRoutes"));
 const aboutRoutes_1 = __importDefault(require("./routes/aboutRoutes"));
+const aboutController_1 = require("./controllers/aboutController");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.set("trust proxy", true);
@@ -31,6 +32,7 @@ app.use(express_1.default.json());
 app.use("/api/auth", authRoutes_1.default);
 app.use("/api/visitors", visitorRoutes_1.default);
 app.use("/api/about", aboutRoutes_1.default);
+app.use("/api/about/test", aboutController_1.about);
 app.get("/", (_req, res) => {
     res.send("API running successfully 🚀");
 });
