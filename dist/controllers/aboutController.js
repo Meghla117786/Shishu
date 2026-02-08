@@ -31,7 +31,8 @@ const getAbout = async (req, res) => {
 };
 exports.getAbout = getAbout;
 const about = async (req, res) => {
-    res.send("test");
+    const about = await About_1.default.findOne({});
+    res.send({ data: about });
 };
 exports.about = about;
 const updateAbout = async (req, res) => {

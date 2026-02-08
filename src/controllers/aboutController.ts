@@ -27,7 +27,8 @@ export const getAbout = async (req: Request, res: Response) => {
     }
 };
 export const about = async (req: Request, res: Response) => {
-    res.send("test")
+    const about = await About.findOne({});
+    res.send({ data: about })
 };
 
 export const updateAbout = async (req: Request, res: Response) => {
