@@ -6,84 +6,72 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getVisitorCounts = exports.addVisitor = void 0;
 const geoip_lite_1 = __importDefault(require("geoip-lite"));
 const Visitor_1 = require("../models/Visitor");
-/**
- * Add a visitor (daily unique by IP)
- */
+const db_1 = __importDefault(require("../config/db"));
 const addVisitor = async (req, res) => {
     try {
-        // 🔹 Get real IP (supports proxy)
-        const ip = req.headers["x-forwarded-for"]?.split(",")[0] ||
+        // ✅ Ensure DB connection (serverless-safe)
+        await (0, db_1.default)();
+        // 🔹 Get real IP (Vercel / proxy compatible)
+        const rawIp = req.headers["x-forwarded-for"]?.split(",")[0] ||
+            req.headers["cf-connecting-ip"] ||
             req.socket.remoteAddress ||
-            "unknown";
-        // 🔹 Normalize date → start of today
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        // 🔹 Detect country from IP
-        const geo = geoip_lite_1.default.lookup(ip);
-        const country = geo?.country || "Unknown";
-        // 🔹 Create visitor (MongoDB unique index prevents duplicates)
-        await Visitor_1.Visitor.create({
-            ip,
-            country,
-            date: today
-        });
-        res.status(201).json({ counted: true });
+            "";
+        const ip = rawIp.replace("::ffff:", "");
+        // 🔹 Today as YYYY-MM-DD
+        const today = new Date().toISOString().slice(0, 10);
+        // 🔹 Detect country safely
+        let country = "Unknown";
+        try {
+            const geo = geoip_lite_1.default.lookup(ip);
+            if (geo?.country)
+                country = geo.country;
+        }
+        catch (e) {
+            console.error("GeoIP failed:", e);
+        }
+        // 🔹 Create visitor (unique index handles duplicates)
+        await Visitor_1.Visitor.create({ ip, country, date: today });
+        return res.status(201).json({ counted: true });
     }
     catch (err) {
-        // Duplicate key → already counted today
+        // Duplicate visitor for today
         if (err.code === 11000) {
             return res.json({ counted: false });
         }
         console.error("Visitor error:", err);
-        res.status(500).json({ message: "Server Error" });
+        return res.status(500).json({
+            message: "Server Error",
+            counted: false,
+        });
     }
 };
 exports.addVisitor = addVisitor;
-/**
- * Get visitor statistics
- */
 const getVisitorCounts = async (req, res) => {
     try {
-        // 🔹 Today (start of day)
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        // 🔹 Total visitors
+        // ✅ Always connect in serverless
+        await (0, db_1.default)();
+        const today = new Date().toISOString().slice(0, 10);
         const total = await Visitor_1.Visitor.countDocuments();
-        // 🔹 Today's visitors
         const todayCount = await Visitor_1.Visitor.countDocuments({ date: today });
-        // 🔹 Country-wise count
         const countryWise = await Visitor_1.Visitor.aggregate([
-            {
-                $group: {
-                    _id: "$country",
-                    count: { $sum: 1 }
-                }
-            },
-            { $sort: { count: -1 } }
+            { $group: { _id: "$country", count: { $sum: 1 } } },
+            { $sort: { count: -1 } },
         ]);
-        // 🔹 ✅ UNIQUE COUNTRY COUNT (NEW)
         const countryCountAgg = await Visitor_1.Visitor.aggregate([
-            {
-                $group: {
-                    _id: "$country"
-                }
-            },
-            {
-                $count: "totalCountries"
-            }
+            { $group: { _id: "$country" } },
+            { $count: "totalCountries" },
         ]);
-        console.log(countryCountAgg);
         const countryCount = countryCountAgg[0]?.totalCountries || 0;
-        res.json({
+        return res.json({
             total,
             today: todayCount,
-            countryCount, // ✅ added
-            countryWise
+            countryCount,
+            countryWise,
         });
     }
     catch (err) {
         console.error("Stats error:", err);
-        res.status(500).json({ message: "Server Error" });
+        return res.status(500).json({ message: "Server Error" });
     }
 };
 exports.getVisitorCounts = getVisitorCounts;

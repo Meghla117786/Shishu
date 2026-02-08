@@ -5,15 +5,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importDefault(require("mongoose"));
 const highlightSchema = new mongoose_1.default.Schema({
-    title: { type: String, required: true },
+    title: { type: String },
     items: [{ type: String }],
 });
 const aboutSchema = new mongoose_1.default.Schema({
-    name: { type: String, required: true },
-    degree: { type: String, required: true },
-    description: { type: String, required: true },
-    image: { type: String },
+    name: String,
+    degree: String,
+    description: String,
+    image: String,
     highlights: [highlightSchema],
 });
-const About = mongoose_1.default.model("About", aboutSchema);
+const About = mongoose_1.default.models.About || mongoose_1.default.model("About", aboutSchema);
 exports.default = About;

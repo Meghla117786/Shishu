@@ -5,47 +5,59 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateAbout = exports.getAbout = void 0;
 const About_1 = __importDefault(require("../models/About"));
+const db_1 = __importDefault(require("../config/db"));
 const getAbout = async (req, res) => {
     try {
+        console.log("Connecting to DB...");
+        await (0, db_1.default)();
+        console.log("Connected! Fetching about...");
         const about = await About_1.default.findOne();
-        res.json(about || {});
+        console.log("About found:", about);
+        return res.json(about || {
+            name: "",
+            degree: "",
+            description: "",
+            image: "",
+            highlights: [],
+        });
     }
     catch (err) {
-        console.error("Get About error:", err);
-        res.status(500).json({ message: "Server error" });
+        console.error("Full error:", err);
+        return res.status(500).json({
+            message: "Server error",
+            error: err instanceof Error ? err.message : "Unknown error"
+        });
     }
 };
 exports.getAbout = getAbout;
 const updateAbout = async (req, res) => {
     try {
+        await (0, db_1.default)(); // 🔴 REQUIRED
         let about = await About_1.default.findOne();
-        // Handle uploaded file
-        if (req.file) {
-            req.body.image = `/uploads/${req.file.filename}`;
-        }
-        // Parse highlights if sent as JSON string
-        if (req.body.highlights && typeof req.body.highlights === "string") {
+        const payload = { ...req.body };
+        // Parse highlights if string
+        if (payload.highlights && typeof payload.highlights === "string") {
             try {
-                req.body.highlights = JSON.parse(req.body.highlights);
+                payload.highlights = JSON.parse(payload.highlights);
             }
-            catch (err) {
-                console.error("Invalid highlights JSON:", err);
+            catch {
                 return res.status(400).json({ message: "Invalid highlights format" });
             }
         }
-        // Create new About if not exists
+        if (!Array.isArray(payload.highlights)) {
+            payload.highlights = [];
+        }
         if (!about) {
-            about = await About_1.default.create(req.body);
+            about = await About_1.default.create(payload);
             return res.status(201).json(about);
         }
-        // Update existing document
-        Object.assign(about, req.body);
+        Object.assign(about, payload);
         await about.save();
-        res.json(about);
+        return res.json(about);
     }
     catch (err) {
         console.error("Update About error:", err);
-        res.status(500).json({ message: "Server error" });
+        return res.status(500).json({ message: "Server error" });
     }
 };
 exports.updateAbout = updateAbout;

@@ -6,14 +6,20 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importDefault(require("mongoose"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
+let cached = global.mongoose;
+if (!cached) {
+    cached = global.mongoose = { conn: null, promise: null };
+}
 const connectDB = async () => {
-    try {
-        const conn = await mongoose_1.default.connect(process.env.MONGO_URI);
-        console.log(`MongoDB Connected: ${conn.connection.host}`);
+    if (cached.conn) {
+        return cached.conn;
     }
-    catch (error) {
-        console.error(`Error: ${error}`);
-        process.exit(1);
+    if (!cached.promise) {
+        cached.promise = mongoose_1.default
+            .connect(process.env.MONGO_URI)
+            .then((mongoose) => mongoose);
     }
+    cached.conn = await cached.promise;
+    return cached.conn;
 };
 exports.default = connectDB;

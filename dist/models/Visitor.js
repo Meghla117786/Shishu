@@ -34,13 +34,13 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Visitor = void 0;
-// src/models/Visitor.ts
 const mongoose_1 = __importStar(require("mongoose"));
 const visitorSchema = new mongoose_1.Schema({
     ip: { type: String, required: true },
     country: { type: String, required: true },
-    date: { type: Date, required: true }
+    date: { type: String, required: true },
 }, { timestamps: true });
 // 🔒 One IP → One Visit → Per Day
 visitorSchema.index({ ip: 1, date: 1 }, { unique: true });
-exports.Visitor = mongoose_1.default.model("Visitor", visitorSchema);
+exports.Visitor = mongoose_1.default.models.Visitor ||
+    mongoose_1.default.model("Visitor", visitorSchema);
